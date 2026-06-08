@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -34,9 +33,7 @@ const servicoSchema = z.object({
   unidade: z.string().min(1, 'Unidade inválida'),
 })
 
-type ServicoFormData = z.infer<typeof servicoSchema>
-
-export default function Servicos() {
+export default function ServicosPage() {
   const [mounted, setMounted] = useState(false)
   const [servicos, setServicos] = useState<Servico[]>([])
   const [openDialog, setOpenDialog] = useState(false)
@@ -98,7 +95,7 @@ export default function Servicos() {
   if (!mounted) return null
 
   return (
-    <Layout title="Serviços">
+    <>
       <PageHeader
         title="Serviços"
         action={{
@@ -161,7 +158,6 @@ export default function Servicos() {
         </div>
       )}
 
-      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
@@ -244,7 +240,6 @@ export default function Servicos() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={open => !open && setDeleteConfirm(null)}
@@ -254,6 +249,6 @@ export default function Servicos() {
         confirmText="Excluir"
         isDestructive
       />
-    </Layout>
+    </>
   )
 }

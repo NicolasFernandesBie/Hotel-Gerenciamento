@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { EmptyState } from '@/components/EmptyState'
@@ -19,7 +18,7 @@ import { getAll } from '@/lib/storage'
 import { formatDate, formatCurrency } from '@/lib/format'
 import type { Pagamento, Reserva, Hospede } from '@/types'
 
-export default function Pagamentos() {
+export default function PagamentosPage() {
   const [mounted, setMounted] = useState(false)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [filteredPagamentos, setFilteredPagamentos] = useState<Pagamento[]>([])
@@ -60,7 +59,7 @@ export default function Pagamentos() {
   }
 
   return (
-    <Layout title="Pagamentos">
+    <>
       <PageHeader title="Pagamentos">
         <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
           <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-white">
@@ -133,6 +132,6 @@ export default function Pagamentos() {
           </Table>
         )}
       </Card>
-    </Layout>
+    </>
   )
 }

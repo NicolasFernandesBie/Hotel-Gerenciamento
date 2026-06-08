@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { Card } from '@/components/ui/card'
@@ -18,7 +17,7 @@ import { getAll } from '@/lib/storage'
 import { formatDate, formatCurrency } from '@/lib/format'
 import type { Consumo, Reserva, Hospede, Servico } from '@/types'
 
-export default function Consumos() {
+export default function ConsumosPage() {
   const [mounted, setMounted] = useState(false)
   const [consumos, setConsumos] = useState<Consumo[]>([])
   const [filteredConsumos, setFilteredConsumos] = useState<Consumo[]>([])
@@ -38,7 +37,6 @@ export default function Consumos() {
     setHospedes(hospedesData)
     setServicos(servicosData)
 
-    // Set default month to current month
     const now = new Date()
     const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     setMonthFilter(defaultMonth)
@@ -63,7 +61,7 @@ export default function Consumos() {
   const totalConsumos = filteredConsumos.reduce((sum, c) => sum + c.valorTotal, 0)
 
   return (
-    <Layout title="Consumos">
+    <>
       <PageHeader title="Consumos">
         <Select value={monthFilter} onValueChange={setMonthFilter}>
           <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-white">
@@ -135,6 +133,6 @@ export default function Consumos() {
           </>
         )}
       </Card>
-    </Layout>
+    </>
   )
 }

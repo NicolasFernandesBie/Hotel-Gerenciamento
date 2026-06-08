@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -42,15 +41,7 @@ const funcionarioSchema = z.object({
   turno: z.enum(['manha', 'tarde', 'noite']),
 })
 
-type FuncionarioFormData = z.infer<typeof funcionarioSchema>
-
-const turnoLabels = {
-  manha: 'Manhã',
-  tarde: 'Tarde',
-  noite: 'Noite',
-}
-
-export default function Funcionarios() {
+export default function FuncionariosPage() {
   const [mounted, setMounted] = useState(false)
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([])
   const [openDialog, setOpenDialog] = useState(false)
@@ -110,10 +101,16 @@ export default function Funcionarios() {
     setDeleteConfirm(null)
   }
 
+  const turnoLabels = {
+    manha: 'Manhã',
+    tarde: 'Tarde',
+    noite: 'Noite',
+  }
+
   if (!mounted) return null
 
   return (
-    <Layout title="Funcionários">
+    <>
       <PageHeader
         title="Funcionários"
         action={{
@@ -157,7 +154,7 @@ export default function Funcionarios() {
                   <TableCell className="text-zinc-50">{funcionario.telefone}</TableCell>
                   <TableCell className="text-zinc-50">
                     <Badge className="bg-zinc-800 text-zinc-300">
-                      {turnoLabels[funcionario.turno as keyof typeof turnoLabels]}
+                      {turnoLabels[funcionario.turno]}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-zinc-50">{formatDate(funcionario.dataAdmissao)}</TableCell>
@@ -188,7 +185,6 @@ export default function Funcionarios() {
         )}
       </Card>
 
-      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
@@ -290,7 +286,6 @@ export default function Funcionarios() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={open => !open && setDeleteConfirm(null)}
@@ -300,6 +295,6 @@ export default function Funcionarios() {
         confirmText="Excluir"
         isDestructive
       />
-    </Layout>
+    </>
   )
 }

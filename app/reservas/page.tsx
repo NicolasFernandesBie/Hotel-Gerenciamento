@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useLocation } from 'wouter'
-import { Layout } from '@/components/Layout'
+import { useRouter } from 'next/navigation'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { EmptyState } from '@/components/EmptyState'
@@ -22,8 +21,8 @@ import { formatDate, formatCurrency, calculateDays } from '@/lib/format'
 import type { Reserva, Hospede, Quarto, TipoQuarto } from '@/types'
 import ReservaDialog from '@/components/ReservaDialog'
 
-export default function Reservas() {
-  const [, navigate] = useLocation()
+export default function ReservasPage() {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [filteredReservas, setFilteredReservas] = useState<Reserva[]>([])
@@ -63,7 +62,7 @@ export default function Reservas() {
   }
 
   return (
-    <Layout title="Reservas">
+    <>
       <PageHeader
         title="Reservas"
         action={{
@@ -128,7 +127,7 @@ export default function Reservas() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/reservas/${reserva.id}`)}
+                        onClick={() => router.push(`/reservas/${reserva.id}`)}
                         className="text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800"
                       >
                         <Eye className="w-4 h-4" />
@@ -150,6 +149,6 @@ export default function Reservas() {
         quartos={quartos}
         tipos={tipos}
       />
-    </Layout>
+    </>
   )
 }

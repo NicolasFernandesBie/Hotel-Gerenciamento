@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
@@ -33,9 +32,7 @@ const tipoQuartoSchema = z.object({
   precoDiaria: z.string().transform(v => parseFloat(v)).refine(v => v > 0, 'Preço deve ser maior que 0'),
 })
 
-type TipoQuartoFormData = z.infer<typeof tipoQuartoSchema>
-
-export default function Tipos() {
+export default function TiposPage() {
   const [mounted, setMounted] = useState(false)
   const [tipos, setTipos] = useState<TipoQuarto[]>([])
   const [openDialog, setOpenDialog] = useState(false)
@@ -49,7 +46,6 @@ export default function Tipos() {
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<any>({
     resolver: zodResolver(tipoQuartoSchema),
@@ -113,7 +109,7 @@ export default function Tipos() {
   if (!mounted) return null
 
   return (
-    <Layout title="Tipos de Quarto">
+    <>
       <PageHeader
         title="Tipos de Quarto"
         action={{
@@ -193,7 +189,6 @@ export default function Tipos() {
         </div>
       )}
 
-      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl">
           <DialogHeader>
@@ -210,7 +205,7 @@ export default function Tipos() {
                   className="bg-zinc-800 border-zinc-700 text-white"
                   placeholder="Ex: Standard"
                 />
-                {errors.nome && <p className="text-red-500 text-sm mt-1">{typeof errors.nome === 'string' ? errors.nome : 'Erro'}</p>}
+                {errors.nome && <p className="text-red-500 text-sm mt-1">{String(errors.nome.message)}</p>}
               </div>
               <div>
                 <Label className="text-zinc-300">Capacidade</Label>
@@ -221,7 +216,7 @@ export default function Tipos() {
                   placeholder="2"
                 />
                 {errors.capacidade && (
-                  <p className="text-red-500 text-sm mt-1">{typeof errors.capacidade === 'string' ? errors.capacidade : 'Erro'}</p>
+                  <p className="text-red-500 text-sm mt-1">{String(errors.capacidade.message)}</p>
                 )}
               </div>
             </div>
@@ -234,9 +229,9 @@ export default function Tipos() {
                 placeholder="Descrição do tipo de quarto"
                 rows={3}
               />
-              {errors.descricao && (
-                <p className="text-red-500 text-sm mt-1">{typeof errors.descricao === 'string' ? errors.descricao : 'Erro'}</p>
-              )}
+                {errors.descricao && (
+                  <p className="text-red-500 text-sm mt-1">{String(errors.descricao.message)}</p>
+                )}
             </div>
 
             <div>
@@ -248,9 +243,9 @@ export default function Tipos() {
                 className="bg-zinc-800 border-zinc-700 text-white"
                 placeholder="150.00"
               />
-              {errors.precoDiaria && (
-                <p className="text-red-500 text-sm mt-1">{typeof errors.precoDiaria === 'string' ? errors.precoDiaria : 'Erro'}</p>
-              )}
+                {errors.precoDiaria && (
+                  <p className="text-red-500 text-sm mt-1">{String(errors.precoDiaria.message)}</p>
+                )}
             </div>
 
             <div>
@@ -259,7 +254,7 @@ export default function Tipos() {
                 <Input
                   value={novaComodidade}
                   onChange={e => setNovaComodidade(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addComodidade())}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addComodidade())}
                   className="bg-zinc-800 border-zinc-700 text-white"
                   placeholder="Digite uma comodidade"
                 />
@@ -304,7 +299,6 @@ export default function Tipos() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={open => !open && setDeleteConfirm(null)}
@@ -314,6 +308,6 @@ export default function Tipos() {
         confirmText="Excluir"
         isDestructive
       />
-    </Layout>
+    </>
   )
 }

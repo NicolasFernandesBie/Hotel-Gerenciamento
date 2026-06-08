@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import { EmptyState } from '@/components/EmptyState'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -41,9 +39,7 @@ const quartoSchema = z.object({
   observacoes: z.string().optional(),
 })
 
-type QuartoFormData = z.infer<typeof quartoSchema>
-
-export default function Quartos() {
+export default function QuartosPage() {
   const [mounted, setMounted] = useState(false)
   const [quartos, setQuartos] = useState<Quarto[]>([])
   const [tipos, setTipos] = useState<TipoQuarto[]>([])
@@ -73,6 +69,13 @@ export default function Quartos() {
   }, [])
 
   const onSubmit = (data: any) => {
+    const numeroQuarto = parseInt(data.numero)
+    const numeroExiste = quartos.some(q => q.numero === numeroQuarto && q.id !== editingId)
+    if (numeroExiste) {
+      alert('Já existe um quarto com este número')
+      return
+    }
+
     if (editingId) {
       const quarto = quartos.find(q => q.id === editingId)
       if (quarto) {
@@ -83,7 +86,7 @@ export default function Quartos() {
     } else {
       const newQuarto: Quarto = {
         id: crypto.randomUUID(),
-        numero: parseInt(data.numero),
+        numero: numeroQuarto,
         andar: parseInt(data.andar),
         tipoQuartoId: data.tipoQuartoId,
         status: data.status,
@@ -124,7 +127,6 @@ export default function Quartos() {
 
   if (!mounted) return null
 
-  // Group quartos by floor
   const quartosPorAndar = quartos.reduce((acc, quarto) => {
     if (!acc[quarto.andar]) acc[quarto.andar] = []
     acc[quarto.andar].push(quarto)
@@ -134,7 +136,7 @@ export default function Quartos() {
   const andares = Object.keys(quartosPorAndar).sort((a, b) => parseInt(a) - parseInt(b))
 
   return (
-    <Layout title="Quartos">
+    <>
       <PageHeader
         title="Quartos"
         action={{
@@ -215,7 +217,6 @@ export default function Quartos() {
         </div>
       )}
 
-      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
@@ -320,7 +321,6 @@ export default function Quartos() {
         </DialogContent>
       </Dialog>
 
-      {/* Status Dialog */}
       <Dialog open={openStatusDialog} onOpenChange={setOpenStatusDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader>
@@ -363,7 +363,6 @@ export default function Quartos() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={open => !open && setDeleteConfirm(null)}
@@ -373,6 +372,6 @@ export default function Quartos() {
         confirmText="Excluir"
         isDestructive
       />
-    </Layout>
+    </>
   )
 }

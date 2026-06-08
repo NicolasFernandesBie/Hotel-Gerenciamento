@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRoute } from 'wouter'
-import { Layout } from '@/components/Layout'
+import { useParams } from 'next/navigation'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StarRating } from '@/components/StarRating'
@@ -42,8 +41,8 @@ import type {
   Avaliacao,
 } from '@/types'
 
-export default function ReservaDetail() {
-  const [match, params] = useRoute('/reservas/:id')
+export default function ReservaDetailPage() {
+  const params = useParams<{ id: string }>()
   const [mounted, setMounted] = useState(false)
   const [reserva, setReserva] = useState<Reserva | null>(null)
   const [hospede, setHospede] = useState<Hospede | null>(null)
@@ -69,6 +68,7 @@ export default function ReservaDetail() {
   const [pagamentoForma, setPagamentoForma] = useState('')
   const [consumoServicoId, setConsumoServicoId] = useState('')
   const [consumoQuantidade, setConsumoQuantidade] = useState('')
+  const [consumoFuncionarioId, setConsumoFuncionarioId] = useState('')
 
   const [notaGeral, setNotaGeral] = useState(0)
   const [notaLimpeza, setNotaLimpeza] = useState(0)
@@ -76,8 +76,6 @@ export default function ReservaDetail() {
   const [comentarioAvaliacao, setComentarioAvaliacao] = useState('')
 
   useEffect(() => {
-    if (!match) return
-
     const reservaId = params?.id
     const reservaData = getAll<Reserva>('hms_reservas').find(r => r.id === reservaId)
 
@@ -109,11 +107,11 @@ export default function ReservaDetail() {
       setNotaGeral(avaliacao.notaGeral)
       setNotaLimpeza(avaliacao.notaLimpeza)
       setNotaAtendimento(avaliacao.notaAtendimento)
-      setComentarioAvaliacao(avaliacao.comentario)
+      setComentarioAvaliacao(avaliacao.comentario || '')
     }
 
     setMounted(true)
-  }, [match, params?.id])
+  }, [params?.id])
 
   if (!mounted || !reserva || !hospede || !quarto || !tipo) return null
 
@@ -144,20 +142,23 @@ export default function ReservaDetail() {
   }
 
   const handleCheckout = () => {
-    if (checkinCheckout) {
-      const updated = {
-        ...checkinCheckout,
-        dataCheckout: new Date().toISOString(),
-        observacoes: checkoutObservacoes,
-      }
-      update('hms_checkins', updated)
-      update('hms_quartos', { ...quarto, status: 'disponivel' })
-      update('hms_reservas', { ...reserva, status: 'concluida' })
-      setCheckinCheckout(updated)
-      setReserva({ ...reserva, status: 'concluida' })
-      setCheckoutObservacoes('')
-      setOpenCheckoutDialog(false)
+    if (!checkinCheckout) return
+    if (saldoDevedor > 0) {
+      alert(`Não é possível concluir o check-out. Saldo devedor pendente: ${formatCurrency(saldoDevedor)}`)
+      return
     }
+    const updated = {
+      ...checkinCheckout,
+      dataCheckout: new Date().toISOString(),
+      observacoes: checkoutObservacoes,
+    }
+    update('hms_checkins', updated)
+    update('hms_quartos', { ...quarto, status: 'disponivel' })
+    update('hms_reservas', { ...reserva, status: 'concluida' })
+    setCheckinCheckout(updated)
+    setReserva({ ...reserva, status: 'concluida' })
+    setCheckoutObservacoes('')
+    setOpenCheckoutDialog(false)
   }
 
   const handlePagamento = () => {
@@ -187,8 +188,12 @@ export default function ReservaDetail() {
   }
 
   const handleConsumo = () => {
-    if (!consumoServicoId || !consumoQuantidade) {
+    if (!consumoServicoId || !consumoQuantidade || !consumoFuncionarioId) {
       alert('Preencha todos os campos')
+      return
+    }
+    if (!checkinCheckout || checkinCheckout.dataCheckout) {
+      alert('Consumo só pode ser registrado durante hospedagem ativa (entre check-in e check-out)')
       return
     }
     const servico = servicos.find(s => s.id === consumoServicoId)
@@ -198,7 +203,7 @@ export default function ReservaDetail() {
       id: crypto.randomUUID(),
       reservaId: reserva.id,
       servicoId: consumoServicoId,
-      funcionarioId: funcionarios[0]?.id || '',
+      funcionarioId: consumoFuncionarioId,
       quantidade: parseInt(consumoQuantidade),
       valorTotal: parseInt(consumoQuantidade) * servico.precoUnitario,
       dataHora: new Date().toISOString(),
@@ -210,6 +215,7 @@ export default function ReservaDetail() {
     setReserva({ ...reserva, valorTotal: novoValorTotal })
     setConsumoServicoId('')
     setConsumoQuantidade('')
+    setConsumoFuncionarioId('')
     setOpenConsumoDialog(false)
   }
 
@@ -264,10 +270,11 @@ export default function ReservaDetail() {
   const resetConsumoForm = () => {
     setConsumoServicoId('')
     setConsumoQuantidade('')
+    setConsumoFuncionarioId('')
   }
 
   return (
-    <Layout title={`Reserva #${reserva.id.slice(0, 8)}`}>
+    <>
       <PageHeader title={`Reserva #${reserva.id.slice(0, 8)}`} />
 
       <div className="grid grid-cols-3 gap-6">
@@ -306,13 +313,32 @@ export default function ReservaDetail() {
           <Card className="bg-zinc-900 border-zinc-800 p-6">
             <h3 className="text-lg font-semibold text-zinc-50 mb-4">Movimentação</h3>
             <div className="space-y-3">
-              {!checkinCheckout ? (
-                <Button
-                  onClick={() => setOpenCheckinDialog(true)}
-                  className="w-full bg-zinc-100 text-zinc-900 hover:bg-white"
-                >
-                  Registrar Check-in
-                </Button>
+              {!checkinCheckout && reserva.status === 'confirmada' ? (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => setOpenCheckinDialog(true)}
+                    className="w-full bg-zinc-100 text-zinc-900 hover:bg-white"
+                  >
+                    Registrar Check-in
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (confirm('Tem certeza que deseja cancelar esta reserva?')) {
+                        const updated = { ...reserva, status: 'cancelada' as const }
+                        update('hms_reservas', updated)
+                        setReserva(updated)
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full border-red-800 text-red-400 hover:bg-red-900/30"
+                  >
+                    Cancelar Reserva
+                  </Button>
+                </div>
+              ) : !checkinCheckout && reserva.status === 'cancelada' ? (
+                <p className="text-zinc-400 text-center py-4">Reserva cancelada</p>
+              ) : !checkinCheckout ? (
+                <p className="text-zinc-400 text-center py-4">Check-in indisponível para reserva {reserva.status}</p>
               ) : (
                 <>
                   <div className="flex justify-between">
@@ -653,6 +679,21 @@ export default function ReservaDetail() {
                 placeholder="1"
               />
             </div>
+            <div>
+              <Label className="text-zinc-300">Funcionário</Label>
+              <Select value={consumoFuncionarioId} onValueChange={setConsumoFuncionarioId}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {funcionarios.map(f => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {consumoPreview > 0 && (
               <div className="bg-zinc-800 p-3 rounded">
                 <p className="text-zinc-400 text-sm">Valor total:</p>
@@ -721,6 +762,6 @@ export default function ReservaDetail() {
           </div>
         </DialogContent>
       </Dialog>
-    </Layout>
+    </>
   )
 }

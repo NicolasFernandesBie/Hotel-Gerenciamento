@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Layout } from '@/components/Layout'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -37,7 +36,7 @@ import type { Hospede } from '@/types'
 const hospedeSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos'),
-  email: z.string().email('Email inválido'),
+  email: z.string().email('Email inválido').or(z.literal('')),
   telefone: z.string().min(10, 'Telefone inválido'),
   dataNascimento: z.string().min(1, 'Data de nascimento é obrigatória'),
   endereco: z.string().min(5, 'Endereço inválido'),
@@ -47,7 +46,7 @@ const hospedeSchema = z.object({
 
 type HostedeFormData = z.infer<typeof hospedeSchema>
 
-export default function Hospedes() {
+export default function HospedesPage() {
   const [mounted, setMounted] = useState(false)
   const [hospedes, setHospedes] = useState<Hospede[]>([])
   const [filteredHospedes, setFilteredHospedes] = useState<Hospede[]>([])
@@ -82,6 +81,22 @@ export default function Hospedes() {
   }, [searchTerm, hospedes])
 
   const onSubmit = (data: HostedeFormData) => {
+    const todosHospedes = getAll<Hospede>('hms_hospedes')
+
+    const cpfExists = todosHospedes.some(h => h.cpf === data.cpf && h.id !== editingId)
+    if (cpfExists) {
+      alert('CPF já cadastrado no sistema')
+      return
+    }
+
+    if (data.email) {
+      const emailExists = todosHospedes.some(h => h.email === data.email && h.id !== editingId)
+      if (emailExists) {
+        alert('Email já cadastrado no sistema')
+        return
+      }
+    }
+
     if (editingId) {
       const hospede = hospedes.find(h => h.id === editingId)
       if (hospede) {
@@ -124,7 +139,7 @@ export default function Hospedes() {
   if (!mounted) return null
 
   return (
-    <Layout title="Hóspedes">
+    <>
       <PageHeader
         title="Hóspedes"
         action={{
@@ -202,7 +217,6 @@ export default function Hospedes() {
         )}
       </Card>
 
-      {/* Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl">
           <DialogHeader>
@@ -322,10 +336,7 @@ export default function Hospedes() {
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                className="bg-zinc-100 text-zinc-900 hover:bg-white"
-              >
+              <Button type="submit" className="bg-zinc-100 text-zinc-900 hover:bg-white">
                 {editingId ? 'Atualizar' : 'Criar'}
               </Button>
             </DialogFooter>
@@ -333,7 +344,6 @@ export default function Hospedes() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteConfirm !== null}
         onOpenChange={open => !open && setDeleteConfirm(null)}
@@ -343,6 +353,6 @@ export default function Hospedes() {
         confirmText="Excluir"
         isDestructive
       />
-    </Layout>
+    </>
   )
 }

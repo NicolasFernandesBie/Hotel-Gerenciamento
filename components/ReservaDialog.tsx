@@ -130,6 +130,16 @@ export default function ReservaDialog({
   }
 
   const handleNovoHospede = (data: any) => {
+    const todosHospedes = getAll<Hospede>('hms_hospedes')
+    if (todosHospedes.some(h => h.cpf === data.cpf)) {
+      alert('CPF já cadastrado no sistema')
+      return
+    }
+    if (data.email && todosHospedes.some(h => h.email === data.email)) {
+      alert('Email já cadastrado no sistema')
+      return
+    }
+
     const newHospede: Hospede = {
       id: crypto.randomUUID(),
       nome: data.nome,
@@ -160,6 +170,7 @@ export default function ReservaDialog({
 
   // Get available rooms for selected dates
   const availableQuartos = quartos.filter(q => {
+    if (q.status !== 'disponivel') return false
     const reservasConflict = getAll<Reserva>('hms_reservas').some(r => {
       if (r.quartoId !== q.id || r.status !== 'confirmada') return false
       const rStart = new Date(r.dataCheckinPrev)
